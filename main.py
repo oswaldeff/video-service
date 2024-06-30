@@ -4,6 +4,7 @@ import sys
 
 from fastapi import FastAPI, Depends
 from starlette.middleware.cors import CORSMiddleware
+from celery import Celery
 
 from src.settings.dev import DevAppSettings
 from src.settings.prod import ProdAppSettings
@@ -22,6 +23,15 @@ def get_dynamodb_client(settings=Depends(create_settings)):
 
 def get_s3_client(settings=Depends(create_settings)):
     return S3Client(settings=settings)
+
+def create_celery(settings):
+    celery = Celery(
+        __name__,
+        broker=settings.celery_broker_url,
+        backend=settings.celery_result_backend
+    )
+    celery.conf.update(settings.dict())
+    return celery
 
 def create_app() -> FastAPI:
     settings = create_settings()
@@ -43,6 +53,8 @@ def create_app() -> FastAPI:
         router,
         dependencies=[Depends(get_dynamodb_client), Depends(get_s3_client)]
     )
+
+    app.state.celery = create_celery(settings)
 
     return app
 

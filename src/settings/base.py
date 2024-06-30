@@ -13,3 +13,5 @@ class AppBaseSettings(BaseSettings):
     aws_s3_secret_access_key: str
     aws_dynamodb_access_key_id: str
     aws_dynamodb_secret_access_key: str
+    celery_broker_url: str
+    celery_result_backend: str
