@@ -11,7 +11,9 @@ class AppBaseSettings(BaseSettings):
     aws_region: str
     aws_s3_access_key_id: str
     aws_s3_secret_access_key: str
+    aws_s3_bucket_name: str
     aws_dynamodb_access_key_id: str
     aws_dynamodb_secret_access_key: str
+    aws_dynamodb_table_name: str
     celery_broker_url: str
     celery_result_backend: str
