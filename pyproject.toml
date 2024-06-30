@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "stockfolio"
+version = "0.1.0"
+description = ""
+authors = ["owaldeff <tialem94@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+fastapi = "0.103"
+pydantic-settings = "2.0.3"
+uvicorn = "^0.30.1"
+boto3 = "^1.26.172"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+packages = [
+        {include = "*.py*", from = "src"}
+]
