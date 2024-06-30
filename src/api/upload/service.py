@@ -1,8 +1,9 @@
 import uuid
 
-from typing import List
+from typing import Tuple, List
 
 from fastapi import UploadFile
+from celery.result import AsyncResult
 
 from src.aws.dynamodb_client import DynamoDBClient
 from src.aws.s3_client import S3Client
@@ -20,18 +21,31 @@ class UploadService:
     async def upload_videos(
             self,
             files: List[UploadFile]
-        ) -> List[str]:
+        ) -> Tuple[List[str], List[str]]:
         video_ids = []
+        task_ids = []
+
         for file in files:
             video_id = str(uuid.uuid4())
             video_ids.append(video_id)
             try:
                 file_data = await file.read()
+                author = "unknown"
                 path = "original"
                 filename = file.filename
                 content_type = file.content_type
-                upload_video_task.delay(file_data, path, filename, content_type, self.dynamodb_client, self.s3_client)
+                
+                task = upload_video_task.apply_async(
+                    args=[video_id, author, file_data, path, filename, content_type]
+                )
+                task_ids.append(task.id)
             except Exception as e:
                 raise e
 
-        return video_ids
+        return video_ids, task_ids
+    
+    def check_task_results(self, task_ids: List[str]):
+        for task_id in task_ids:
+            result = AsyncResult(task_id)
+            if result.failed():
+                raise Exception(f"Task {task_id} failed: {result.info}")

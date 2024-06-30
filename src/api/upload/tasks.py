@@ -1,26 +1,23 @@
-import uuid
-
-from fastapi import Depends
-
 from src.celery.config import celery_app
+from src.settings.dispatch import create_settings
 from src.aws.dynamodb_client import DynamoDBClient
 from src.aws.s3_client import S3Client
 
 @celery_app.task(bind=True)
 def upload_video_task(
         self,
+        video_id: str,
+        author: str,
         file_data: bytes,
         path: str,
         filename: str,
-        content_type: str,
-        dynamodb_client: DynamoDBClient = Depends(),
-        s3_client: S3Client = Depends()
+        content_type: str
     ) -> None:
     try:
-        video_id = str(uuid.uuid4())
-        author = ""
+        dynamodb_client = DynamoDBClient(settings=create_settings())
+        s3_client = S3Client(settings=create_settings())
+
         s3_client.upload_file_from_data(file_data, video_id, path, content_type)
-        
         metadata = {
             "path": path,
             "filename": filename,
@@ -28,5 +25,5 @@ def upload_video_task(
         }
         dynamodb_client.save_metadata(video_id, author, metadata)
     except Exception as e:
-        self.retry(exc=e, countdown=30, max_retries=2)
+        # FIXME: rollback
         raise e
