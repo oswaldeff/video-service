@@ -4,18 +4,12 @@ import sys
 
 from fastapi import FastAPI, Depends
 from starlette.middleware.cors import CORSMiddleware
+from celery import Celery
 
-from src.settings.dev import DevAppSettings
-from src.settings.prod import ProdAppSettings
+from src.settings.dispatch import create_settings
 from src.aws.dynamodb_client import DynamoDBClient
 from src.aws.s3_client import S3Client
 from routes import router
-
-def create_settings():
-    if 'prod' in sys.argv:
-        return ProdAppSettings()
-    else:
-        return DevAppSettings()
 
 def get_dynamodb_client(settings=Depends(create_settings)):
     return DynamoDBClient(settings=settings)
